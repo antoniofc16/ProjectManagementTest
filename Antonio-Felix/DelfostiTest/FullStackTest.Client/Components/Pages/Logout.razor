@@ -1,0 +1,26 @@
+﻿@page "/Logout"
+
+@inject NavigationManager NavigationManager
+@inject AuthenticatedUser AuthenticatedUser
+@inject ISessionStorageService SessionStorageService
+
+<AuthorizeView>
+    <NotAuthorized>
+        @{
+            NavigationManager.NavigateTo("/Login", true);
+        }
+    </NotAuthorized>
+    <Authorized>
+        <PageTitle>Cerrando Sesión...</PageTitle>
+        <p>Cerrando Sesión...</p>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        AuthenticatedUser.User = null;
+        await SessionStorageService.RemoveItemAsync("token");
+        NavigationManager.NavigateTo("/Login", true);
+    }
+}

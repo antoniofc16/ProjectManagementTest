@@ -1,0 +1,70 @@
+﻿@using MudBlazor
+
+@inject AuthenticatedUser AuthenticatedUser
+@inject IProjectService ProjectService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Class="p-2">
+            <MudItem xs="12" sm="12">
+                <MudTextField Label="Titulo" T="string" @bind-Value="@Project.Title" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="12">
+                <MudTextField Lines="6" Label="Descripcion" T="string" @bind-Value="@Project.Description" Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SaveProject">Guardar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+    [Parameter]
+    public Project? Project { get; set; }
+    private bool IsNew = false;
+
+    protected override void OnInitialized()
+    {
+        IsNew = Project is null;
+        if (IsNew)
+        {
+            Project = new();
+        }
+    }
+
+    private async Task SaveProject()
+    {
+        if (string.IsNullOrEmpty(Project.Title))
+        {
+            Snackbar.AddSnackBar("Ingrese el título!", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(Project.Description))
+        {
+            Snackbar.AddSnackBar("Ingrese la descripción!", Severity.Warning);
+            return;
+        }
+
+        var project = new SaveProjectRequest();
+        project.Title = Project.Title;
+        project.Description = Project.Description;
+        project.SavedBy = AuthenticatedUser.User.Email;
+        if (Project.Id != default(Guid)) project.ProjectId = Project.Id;
+
+        var response = await ProjectService.SaveProject(project);
+
+        if (response.Status == "Ok")
+        {
+            Snackbar.AddSnackBar("Se guardaron los cambios!", Severity.Success);
+            MudDialog.Close(response.Projects);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

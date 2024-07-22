@@ -1,0 +1,61 @@
+﻿@page "/Login"
+@using MudBlazor
+
+@rendermode InteractiveServer
+
+@inject IUserService UserService
+@inject NavigationManager NavigationManager
+@inject ISessionStorageService SessionStorage
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticatedUser AuthenticatedUser
+
+@attribute [AllowAnonymous]
+
+<PageTitle>Iniciar Sesion</PageTitle>
+
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <h2>Inicio de Sesión</h2>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <EditForm class="new-blog-form" Model="@LoginRequest" OnValidSubmit="SubmitLogin">
+            <MudGrid Class="p-2">
+                <MudItem xs="12" sm="12">
+                    <MudTextField Label="Email" T="string" @bind-Value="@LoginRequest.Email" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="12">
+                    <MudTextField Label="Contraseña" InputType="InputType.Password" T="string" @bind-Value="@LoginRequest.Password" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudDivider />
+                <MudItem xs="12" sm="4"></MudItem>
+                <MudItem xs="12" sm="4">
+                    <div style="text-align:center;">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Style="margin-bottom:10px;">Iniciar Sesión</MudButton>
+                        <br />
+                        <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => NavigationManager.NavigateTo("/Register"))">¿Es nuevo usuario? Registrese</MudButton>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="4"></MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudCardContent>
+</MudCard>
+
+
+@code {
+    private LoginRequest LoginRequest = new LoginRequest();
+
+    private async Task SubmitLogin()
+    {
+        var authResponse = await UserService.AuthenticateUser(LoginRequest);
+        if (authResponse != null)
+        {
+            AuthenticatedUser.User = authResponse.AuthenticatedUser!;
+            await SessionStorage.SetItemAsync("token", authResponse.BearerToken);
+            ((CustomAuthenticationStateProvider)AuthenticationStateProvider).AuthenticateUser(authResponse.BearerToken!);
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}

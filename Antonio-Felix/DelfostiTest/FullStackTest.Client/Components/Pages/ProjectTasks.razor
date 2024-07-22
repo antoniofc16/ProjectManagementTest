@@ -1,0 +1,109 @@
+﻿@page "/Projects/{ProjectId}/Tasks"
+
+@using MudBlazor
+
+@rendermode InteractiveServer
+
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticatedUser AuthenticatedUser
+@inject IDialogService DialogService
+@inject IProjectService ProjectService
+@inject ISnackbar Snackbar
+
+<PageTitle>Tareas</PageTitle>
+
+<AuthorizeView>
+    <NotAuthorized>
+        @{
+            NavigationManager.NavigateTo("/Login", true);
+        }
+    </NotAuthorized>
+    <Authorized>
+        <MudCard>
+            <MudCardContent>
+                <MudGrid Class="pt-4">
+                    @if (AuthenticatedUser.User.RoleId == UserRoles.Admin)
+                    {
+                        <MudItem xs="12" sm="12">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="async () => await OpenDialogTask()">
+                                Crear Tarea
+                            </MudButton>
+                        </MudItem>
+                        <MudDivider />
+                    }
+
+                    @foreach (var status in Statuses.OrderByDescending(status => status.Description))
+                    {
+                        <MudItem xs="12" sm="4">
+                            <MudCard Style="@($"background-color: {status.GetColor()}; height: 100% !important;")">
+                                <MudCardHeader>
+                                    <CardHeaderContent>
+                                        <h4 style="color:white;">@status.Description</h4>
+                                    </CardHeaderContent>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudList T="string">
+                                        @foreach (var item in Tasks.Where(task => task.StatusId == status.Id))
+                                        {
+                                            <MudListItem Dense="true" OnClick="() => OpenDialogTask(item)">
+                                                <ChildContent>
+                                                    <MudCard Style="background-color: lightgoldenrodyellow">
+                                                        <MudCardHeader>
+                                                            @item.Title
+                                                        </MudCardHeader>
+                                                        <MudCardContent>
+                                                            <MudTextField Lines="5" Value="item.Description" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" ReadOnly />
+                                                        </MudCardContent>
+                                                    </MudCard>
+                                                </ChildContent>
+                                            </MudListItem>
+                                        }
+                                    </MudList>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                 </MudGrid>
+
+             </MudCardContent>
+         </MudCard>
+     </Authorized>
+ </AuthorizeView>
+
+@code {
+    [Parameter]
+    public string ProjectId { get; set; }
+    private List<ProjectTask> Tasks = [];
+    private List<Models.TaskStatus> Statuses = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Statuses = await ProjectService.GetTaskStatuses();
+        var response = await ProjectService.GetTasksByProjectId(Guid.Parse(ProjectId));
+        if(response.Status == "Ok"){
+            Tasks = response.Tasks;
+        }
+    }
+
+    private async Task OpenDialogTask(ProjectTask? projectTask = null)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Large };
+        var parameters = new DialogParameters();
+        parameters.Add("ProjectTask", projectTask);
+        parameters.Add("TaskStatuses", Statuses);
+        parameters.Add("ProjectId", Guid.Parse(ProjectId));
+        var dialog = DialogService.Show<TaskDetailDialog>(projectTask is null ? "Nueva Tarea" : "Detalle de Tarea", parameters, options);
+        var result = await dialog.Result;
+
+        if (!(result?.Canceled ?? true))
+        {
+            var tasks = result.Data as List<ProjectTask>;
+            Tasks = tasks;
+        }
+        
+    }
+}

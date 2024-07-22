@@ -1,0 +1,99 @@
+﻿@page "/Projects"
+
+@using MudBlazor
+
+@rendermode InteractiveServer
+
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticatedUser AuthenticatedUser
+@inject IDialogService DialogService
+@inject IProjectService ProjectService
+@inject ISnackbar Snackbar
+
+<PageTitle>Proyectos</PageTitle>
+
+<AuthorizeView>
+    <NotAuthorized>
+        @{
+            NavigationManager.NavigateTo("/Login", true);
+        }
+    </NotAuthorized>
+    <Authorized>
+        <MudCard>
+            <MudCardContent>
+                <MudGrid Class="pt-4">
+                    @if (AuthenticatedUser.User.RoleId == UserRoles.Admin)
+                    {
+                        <MudItem xs="12" sm="12">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="async () => await OpenDialogProject()">
+                                Crear Proyecto
+                            </MudButton>
+                        </MudItem>
+                        <MudDivider />
+                    }
+                    <MudItem xs="12" sm="12">
+                        <MudTable Context="item" Items="ProjectList" Height="50vh" FixedHeader="true">
+                            <HeaderContent>
+                                <MudTh><MudTableSortLabel SortBy="new Func<Project, object>(x=>x.Title)">Título</MudTableSortLabel></MudTh>
+                                <MudTh><MudTableSortLabel SortBy="new Func<Project, object>(x=>x.Description)">Descripción</MudTableSortLabel></MudTh>
+                                <MudTh><MudTableSortLabel SortBy="new Func<Project, object>(x=>x.CreatedBy)">Creado Por</MudTableSortLabel></MudTh>
+                                <MudTh><MudTableSortLabel SortBy="new Func<Project, object>(x=>x.CreatedOn)">Fec. de Creación</MudTableSortLabel></MudTh>
+                                <MudTh>Acciones</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Title">@item.Title</MudTd>
+                                <MudTd DataLabel="Description">@item.Description</MudTd>
+                                <MudTd DataLabel="CreatedBy">@item.CreatedBy</MudTd>
+                                <MudTd DataLabel="CreatedOn">@item.CreatedOn.ToPeruTimeZone().ToString("dd/MM/yyyy HH:mm:ss")</MudTd>
+                                <MudTd DataLabel="Actions">
+                                    <MudButtonGroup FullWidth OverrideStyles="false">
+                                        @if (AuthenticatedUser.User.RoleId == UserRoles.Admin)
+                                        {
+                                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning" OnClick="async () => await OpenDialogProject(item)">Editar</MudButton>
+                                        }
+                                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.OpenInNew" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo($"/Projects/{item.Id}/Tasks"))">Ver Tareas</MudButton>
+                                    </MudButtonGroup>
+                                </MudTd>
+                            </RowTemplate>
+                            <PagerContent>
+                                <MudTablePager PageSizeOptions="[10,20,30,50]" />
+                            </PagerContent>
+                         </MudTable>
+                     </MudItem>
+                 </MudGrid>
+
+             </MudCardContent>
+         </MudCard>
+     </Authorized>
+ </AuthorizeView>
+
+ @code {
+    private List<Project> ProjectList = [];
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await ProjectService.GetProjects();
+        if (response.Status == "Ok")
+        {
+            ProjectList = response.Projects;
+        }
+    }
+
+    private async Task OpenDialogProject(Project? project = null)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Large };
+        var parameters = new DialogParameters();
+        parameters.Add("Project", project);
+        var dialog = DialogService.Show<ProjectDetailDialog>(project is null ? "Nuevo Proyecto" : "Detalle de Proyecto", parameters, options);
+        var result = await dialog.Result;
+
+        if (!(result?.Canceled ?? true))
+        {
+            var projects = result.Data as List<Project>;
+            ProjectList = projects;
+        }
+    }
+}

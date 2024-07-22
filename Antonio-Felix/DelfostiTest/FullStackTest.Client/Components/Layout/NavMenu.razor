@@ -1,0 +1,22 @@
+﻿@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+
+@inject NavigationManager NavigationManager
+
+<AuthorizeView>
+    <Authorized>
+        <MudNavMenu>
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Inicio</MudNavLink>
+            <MudNavLink Href="Projects" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.DynamicForm">Proyectos</MudNavLink>
+            <MudNavLink Href="Logout" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Logout">Cerrar Sesión</MudNavLink>
+        </MudNavMenu>
+    </Authorized>
+    <NotAuthorized>
+        <MudNavMenu>
+            <MudNavLink Href="Login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Login">Iniciar Sesión</MudNavLink>
+            <MudNavLink Href="Register" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisedUserCircle">Registrarse</MudNavLink>
+        </MudNavMenu>
+    </NotAuthorized>
+</AuthorizeView>

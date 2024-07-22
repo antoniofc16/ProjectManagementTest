@@ -1,0 +1,33 @@
+﻿@page "/"
+@using MudBlazor
+
+@rendermode InteractiveServer
+
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Inicio</PageTitle>
+
+<AuthorizeView>
+    <NotAuthorized>
+        @{
+            NavigationManager.NavigateTo("/Login", true);
+        }
+    </NotAuthorized>
+    <Authorized>
+        <MudText Typo="Typo.h5" Class="mb-8">@("Bienvenid@ a Gestión de Proyectos")</MudText>
+        <MudGrid>
+            <MudItem md="4">
+                <MudPaper Class="d-flex align-center justify-center mud-width-full py-16" Style="background-color:aliceblue">
+                    <MudButton Variant="Variant.Text" Href="/Projects">Proyectos</MudButton>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </Authorized>
+</AuthorizeView>
+
+@code{
+    protected override void OnInitialized()
+    {
+    }
+}

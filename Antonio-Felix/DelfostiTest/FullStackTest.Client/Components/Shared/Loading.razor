@@ -1,0 +1,23 @@
+﻿@inject ComponentService ComponentService
+
+<div class="loading-overlay" style="display: @(IsVisible ? "block" : "none")" @attributes="AdditionalAttributes">
+    <div class="loading-spinner"></div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ComponentService.LoadingTrigger += (bool isLoading) =>
+        {
+            InvokeAsync(() => {
+                this.IsVisible = isLoading;
+                StateHasChanged();
+            });
+        };
+    }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; }
+
+    private bool IsVisible { get; set; }
+}

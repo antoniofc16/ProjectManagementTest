@@ -1,0 +1,84 @@
+﻿@page "/Register"
+@using MudBlazor
+
+@rendermode InteractiveServer
+
+@inject IUserService UserService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Registro de Usuario</PageTitle>
+
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <h2>Registro de Usuario</h2>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <EditForm class="new-blog-form" Model="@registerRequest" OnValidSubmit="SubmitRegister">
+            <MudGrid Class="p-2">
+                <MudItem xs="12" sm="12">
+                    <MudTextField Label="Nombre Completo" T="string" @bind-Value="@registerRequest.FullName" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="12">
+                    <MudTextField Label="Email" T="string" @bind-Value="@registerRequest.Email" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="12">
+                    <MudTextField Label="Contraseña" InputType="InputType.Password" T="string" @bind-Value="@registerRequest.Password" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="12">
+                    <MudTextField Label="Confirmar Contraseña" InputType="InputType.Password" T="string" @bind-Value="@ConfirmPassword" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudDivider />
+                <MudItem xs="12" sm="4"></MudItem>
+                <MudItem xs="12" sm="4">
+                    <div style="text-align:center;">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Style="margin-bottom:10px;">Registar Usuario</MudButton>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="4"></MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudCardContent>
+</MudCard>
+
+
+
+@code {
+    private RegisterRequest registerRequest = new RegisterRequest();
+    private string ConfirmPassword = string.Empty;
+    private async Task SubmitRegister()
+    {
+        if (string.IsNullOrEmpty(registerRequest.FullName))
+        {
+            Snackbar.AddSnackBar("Ingrese su nombre completo", Severity.Warning);
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(registerRequest.Email))
+        {
+            Snackbar.AddSnackBar("Ingrese su email", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(ConfirmPassword) || string.IsNullOrEmpty(registerRequest.Password))
+        {
+            Snackbar.AddSnackBar("Ingrese y confirme su contraseña", Severity.Warning);
+            return;
+        }
+
+        if(ConfirmPassword != registerRequest.Password)
+        {
+            Snackbar.AddSnackBar("Las contraseñas no coinciden", Severity.Warning);
+            return;
+        }
+
+        var registerResponse = await UserService.RegisterUser(registerRequest);
+        if (registerResponse)
+        {
+            Snackbar.AddSnackBar("Registro exitoso!", Severity.Success, 5);
+            NavigationManager.NavigateTo("/Login");
+        }
+    }
+}

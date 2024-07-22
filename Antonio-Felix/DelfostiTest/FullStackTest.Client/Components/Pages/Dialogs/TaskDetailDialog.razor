@@ -1,0 +1,87 @@
+﻿@using FullStackTest.Client.Commons
+@using MudBlazor
+
+@inject AuthenticatedUser AuthenticatedUser
+@inject IProjectService ProjectService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Class="p-2">
+            <MudItem xs="12" sm="12">
+                <MudTextField Label="Titulo" T="string" @bind-Value="@ProjectTask.Title" ReadOnly="!IsNew" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="12">
+                <MudTextField Lines="6" Label="Descripcion" T="string" @bind-Value="@ProjectTask.Description" ReadOnly="!IsNew" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="12">
+                <MudSelect T="Guid" @bind-Value="@ProjectTask.StatusId" ReadOnly="IsNew" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
+                    @foreach (var status in TaskStatuses)
+                    {
+                        <MudSelectItem Value="status.Id">@status.Description</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SaveProjectTask">Guardar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+    [Parameter]
+    public Guid ProjectId { get; set; }
+    [Parameter]
+    public ProjectTask? ProjectTask { get; set; }
+    [Parameter]
+    public List<Models.TaskStatus> TaskStatuses { get; set; }
+    private bool IsNew = false;
+
+    protected override void OnInitialized()
+    {
+        IsNew = ProjectTask is null;
+        if (IsNew)
+        {
+            ProjectTask = new();
+            ProjectTask.ProjectId = ProjectId;
+            ProjectTask.StatusId = ProjectManagementCommons.TaskStatuses.Pending;
+        }
+    }
+
+    private async Task SaveProjectTask()
+    {
+        if (string.IsNullOrEmpty(ProjectTask.Title))
+        {
+            Snackbar.AddSnackBar("Ingrese el título!", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(ProjectTask.Description))
+        {
+            Snackbar.AddSnackBar("Ingrese la descripción!", Severity.Warning);
+            return;
+        }
+
+        var task = new SaveTaskRequest();
+        task.ProjectId = ProjectTask.ProjectId;
+        task.Title = ProjectTask.Title;
+        task.Description = ProjectTask.Description;
+        task.StatusId = ProjectTask.StatusId;
+        task.SavedBy = AuthenticatedUser.User.Email;
+        if (!IsNew) task.TaskId = ProjectTask.Id;
+
+        var response = await ProjectService.SaveTask(task);
+
+        if (response.Status == "Ok")
+        {
+            Snackbar.AddSnackBar("Se guardaron los cambios!", Severity.Success);
+            MudDialog.Close(response.Tasks);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
