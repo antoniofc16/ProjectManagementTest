@@ -49,3 +49,6 @@ Finalmente ya tenemos el entorno configurado y listo para iniciar los proyectos,
 
 - Con respecto a la conexion de base de datos, de preferencia colocar el nombre de tu servidor SQL local para evitar conflictos en la creacion de la base de datos.
 - Los proyectos ya se encuentran configurados para funcionar en el entorno local por lo que no es necesario realizar ajustes extras.
+- Las credenciales del usuario Administrador son las siguientes:
+    - Email: jjimenez@gmail.com
+    - Contraseña: $Test1234
